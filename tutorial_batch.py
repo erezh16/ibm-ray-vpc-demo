@@ -5,17 +5,12 @@ from transformers import pipeline, Pipeline
 import torch
 from ray import serve
 # import ray
-# import time
-# import sys
+import time
+import sys
 
 @serve.deployment(ray_actor_options={"num_cpus": 0, "num_gpus": 1})
 class BatchTextGenerator:
     def __init__(self, use_gpu):
-
-        # torch_device = "cpu"
-        # if use_gpu and torch.cuda.is_available():
-        #     torch_device = "cuda:{}".format(torch.cuda.current_device())
-        #     torch.set_grad_enabled(False)
         torch_device = -1
         if use_gpu and torch.cuda.is_available():
             torch_device = torch.cuda.current_device()
@@ -33,16 +28,16 @@ class BatchTextGenerator:
     async def __call__(self, request: Request) -> List[str]:
         return await self.handle_batch(request.query_params["text"])
 
-#if __name__ == "__main__":
-generator = BatchTextGenerator.bind(True)
-    # handle = serve.run(generator)
-    # print("Deployed successfully")
-    # try:
-    #     while True:
-    #         # Block, letting Ray print logs to the terminal.
-    #         time.sleep(10)
+if __name__ == "__main__":
+    generator = BatchTextGenerator.bind(True)
+    handle = serve.run(generator)
+    print("Deployed successfully")
+    try:
+        while True:
+            # Block, letting Ray print logs to the terminal.
+            time.sleep(10)
 
-    # except KeyboardInterrupt:
-    #     print("Got KeyboardInterrupt, shutting down...")
-    #     serve.shutdown()
-    #     sys.exit()
+    except KeyboardInterrupt:
+        print("Got KeyboardInterrupt, shutting down...")
+        serve.shutdown()
+        sys.exit()

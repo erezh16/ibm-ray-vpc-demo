@@ -3,6 +3,7 @@ import ray
 import requests
 import numpy as np
 import datetime
+import click
 
 @ray.remote
 def send_query(text):
@@ -11,17 +12,17 @@ def send_query(text):
     rtt = (datetime.datetime.now() - ts).total_seconds() * 1000     # Request round-trip time in msec
     return (resp.text, rtt)
 
-def print_results(results):
+def print_results(results,request_num):
     print("Results returned:\n")
     sum = 0
     sumsq = 0
-    for i in range(n):
+    for i in range(request_num):
         rtt = results[i][1]
         print("[{}] {}\n-----------\nRTT = {}\n-----------\n".format(i, results[i][0], rtt))
         sum += rtt
         sumsq += rtt * rtt
-    avg = sum / n
-    std = math.sqrt(sumsq / n - avg * avg)
+    avg = sum / request_num
+    std = math.sqrt(sumsq / request_num - avg * avg)
     print("============================\nRTT Average: {} Std.Dev: {}".format(avg, std))
 
 # Let's use Ray to send all queries in parallel
@@ -37,7 +38,12 @@ texts = [
     'My best talent is',
     'Call me',
 ]
-n = 100
-results = ray.get([send_query.remote(texts[i % len(texts)]) for i in range(n)])
-print_results(results)
 
+@click.command()
+@click.option('--requests', '-r', show_default=True, default=10, help=f'number of concurrent requests')
+def builder(requests):
+    results = ray.get([send_query.remote(texts[i % len(texts)]) for i in range(requests)])
+    print_results(results,requests)
+
+if __name__ == '__main__':
+    builder()

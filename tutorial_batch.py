@@ -4,9 +4,9 @@ from starlette.requests import Request
 from transformers import pipeline, Pipeline
 import torch
 from ray import serve
-# import ray
 import time
 import sys
+import click
 
 @serve.deployment(ray_actor_options={"num_cpus": 0, "num_gpus": 1})
 class BatchTextGenerator:
@@ -28,8 +28,10 @@ class BatchTextGenerator:
     async def __call__(self, request: Request) -> List[str]:
         return await self.handle_batch(request.query_params["text"])
 
-if __name__ == "__main__":
-    generator = BatchTextGenerator.bind(True)
+@click.command()
+@click.option('--cpu', '-c',show_default=True, default=False, help=f'Execute using CPU', is_flag=True)
+def builder(cpu):
+    generator = BatchTextGenerator.bind(not cpu)
     handle = serve.run(generator)
     print("Deployed successfully")
     try:
@@ -41,3 +43,6 @@ if __name__ == "__main__":
         print("Got KeyboardInterrupt, shutting down...")
         serve.shutdown()
         sys.exit()
+
+if __name__ == '__main__':
+    builder()

@@ -1,11 +1,28 @@
+import math
 import ray
 import requests
 import numpy as np
+import datetime
 
 @ray.remote
 def send_query(text):
+    ts = datetime.datetime.now()    
     resp = requests.get("http://localhost:8000/?text={}".format(text))
-    return resp.text
+    rtt = (datetime.datetime.now() - ts).total_seconds() * 1000     # Request round-trip time in msec
+    return (resp.text, rtt)
+
+def print_results(results):
+    print("Results returned:\n")
+    sum = 0
+    sumsq = 0
+    for i in range(n):
+        rtt = results[i][1]
+        print("[{}] {}\n-----------\nRTT = {}\n-----------\n".format(i, results[i][0], rtt))
+        sum += rtt
+        sumsq += rtt * rtt
+    avg = sum / n
+    std = math.sqrt(sumsq / n - avg * avg)
+    print("============================\nRTT Average: {} Std.Dev: {}".format(avg, std))
 
 # Let's use Ray to send all queries in parallel
 texts = [
@@ -18,6 +35,9 @@ texts = [
     'My greatest wish is to',
     'In a galaxy far far away',
     'My best talent is',
+    'Call me',
 ]
-results = ray.get([send_query.remote(text) for text in texts])
-print("Result returned:", results)
+n = 100
+results = ray.get([send_query.remote(texts[i % len(texts)]) for i in range(n)])
+print_results(results)
+

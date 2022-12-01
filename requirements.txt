@@ -1,4 +1,4 @@
-ray[serve]==2.1.0
-torch==1.12.1+cu116
-transformers==4.23.1
-click==8.0.4
+ray[serve]
+torch
+transformers
+click

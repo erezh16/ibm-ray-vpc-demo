@@ -9,7 +9,7 @@ import sys
 import click
 
 @serve.deployment(autoscaling_config={
-        "min_replicas": 1,
+        "min_replicas": 0,
         "max_replicas": 3,
         "target_num_ongoing_requests_per_replica": 10,
     }, 
